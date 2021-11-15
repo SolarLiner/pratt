@@ -42,7 +42,7 @@ pub enum Affix {
 }
 
 #[derive(Debug)]
-pub enum PrattError<I: fmt::Debug, E: fmt::Display> {
+pub enum PrattError<I, E> {
     UserError(E),
     EmptyInput,
     UnexpectedNilfix(I),
@@ -87,8 +87,8 @@ pub trait PrattParser<Inputs>
 where
     Inputs: Iterator<Item = Self::Input>,
 {
-    type Error: fmt::Display;
-    type Input: fmt::Debug;
+    type Error;
+    type Input;
     type Output: Sized;
 
     fn query(&mut self, input: &Self::Input) -> result::Result<Affix, Self::Error>;
@@ -116,14 +116,14 @@ where
 
     fn parse(
         &mut self,
-        inputs: &mut Inputs,
+        inputs: Inputs,
     ) -> result::Result<Self::Output, PrattError<Self::Input, Self::Error>> {
         self.parse_input(&mut inputs.peekable(), Precedence(0))
     }
 
     fn parse_input(
         &mut self,
-        tail: &mut Peekable<&mut Inputs>,
+        tail: &mut Peekable<Inputs>,
         rbp: Precedence,
     ) -> result::Result<Self::Output, PrattError<Self::Input, Self::Error>> {
         if let Some(head) = tail.next() {
@@ -151,7 +151,7 @@ where
     fn nud(
         &mut self,
         head: Self::Input,
-        tail: &mut Peekable<&mut Inputs>,
+        tail: &mut Peekable<Inputs>,
         info: Affix,
     ) -> result::Result<Self::Output, PrattError<Self::Input, Self::Error>> {
         match info {
@@ -169,7 +169,7 @@ where
     fn led(
         &mut self,
         head: Self::Input,
-        tail: &mut Peekable<&mut Inputs>,
+        tail: &mut Peekable<Inputs>,
         info: Affix,
         lhs: Self::Output,
     ) -> result::Result<Self::Output, PrattError<Self::Input, Self::Error>> {
